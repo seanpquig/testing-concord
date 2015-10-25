@@ -1,24 +1,22 @@
 package com.concord.kafka
 
 import java.util
+import java.util.concurrent.ConcurrentLinkedQueue
 
 import com.concord.swift.Record
 import com.concord._
-
-import scala.util.Random
 
 
 /**
  * Operator that consumes from Kafka
  */
-class KafkaConsumer extends Computation {
+class ConcordKafkaConsumer extends Computation {
 
-  private val words = Array("foo", "bar", "baz", "fiz", "buzz")
-  private val rand: Random = new Random()
-  private def sample(): String  = {
-    val idx = rand.nextInt(words.length)
-    words(idx)
-  }
+  val queue = new ConcurrentLinkedQueue[String]()
+
+  val numThreads = 5
+  val consumerGroup = new ConsumerGroup("nginx_analytics_access_log", queue)
+  consumerGroup.run(5)
 
   @Override
   def init(ctx: ComputationContext) {
@@ -33,12 +31,18 @@ class KafkaConsumer extends Computation {
 
   @Override
   def processTimer(ctx: ComputationContext, key: String, time: Long) {
-    // Stream, key, value. Empty value, no need for val
-    Range(0, 1024).foreach{ i =>
-      ctx.produceRecord("words".getBytes(), sample().getBytes(), "-".getBytes())
+    var recordsRead = 0
+    var record: String = queue.poll()
+
+    while(record != null) {
+      recordsRead += 1
+      ctx.produceRecord("kafka-stream".getBytes(), record.getBytes(), record.getBytes())
+
+      record = queue.poll()
     }
 
-    ctx.setTimer(key, System.currentTimeMillis() + 5000)
+    println(s"RECORDS READ: $recordsRead")
+    ctx.setTimer(key, System.currentTimeMillis() + 1000)
   }
 
   @Override
@@ -49,8 +53,8 @@ class KafkaConsumer extends Computation {
 
 }
 
-object KafkaSource {
+object ConcordKafkaConsumer {
   def main(args: Array[String]) = {
-    ServeComputation.serve(new KafkaConsumer())
+    ServeComputation.serve(new ConcordKafkaConsumer())
   }
 }

@@ -8,7 +8,9 @@ scalacOptions ++= Seq("-feature", "-language:higherKinds")
 
 libraryDependencies ++= Seq(
   "io.concord" % "concord" % "0.1.0",
-  "io.concord" % "rawapi" % "0.1.0"
+  "io.concord" % "rawapi" % "0.1.0",
+  "org.apache.kafka" % "kafka_2.11" % "0.8.2.1",
+  "org.apache.kafka" % "kafka-clients" % "0.8.2.1"
 )
 
 
@@ -24,3 +26,5 @@ resolvers += Resolver.sonatypeRepo("public")
 resolvers += "clojars" at "https://clojars.org/repo"
 
 resolvers += "conjars" at "http://conjars.org/repo"
+
+resolvers += "Apache repo" at "https://repository.apache.org/content/repositories/releases"
